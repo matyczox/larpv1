@@ -1,0 +1,13 @@
+{
+  "name": "paradox-learning-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Interaktywny prototyp platformy edukacyjnej na konkurs UwB",
+  "scripts": {
+    "start": "node server/server.mjs",
+    "dev": "node --watch server/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check docs/app/src/app.js && node --check docs/app/src/engine.js && node --check server/server.mjs && npm test"
+  }
+}
