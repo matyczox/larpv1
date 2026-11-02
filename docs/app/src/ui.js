@@ -29,6 +29,11 @@ const PATHS = {
   trash: '<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6.5 7 7.5 20h9l1-13"/>',
   minus: '<path d="M5 12h14"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  bolt: '<path d="m13 2-9 12h7l-1 8 10-12h-7z"/>',
+  warn: '<path d="M12 3 2 20h20z"/><path d="M12 9v5"/><path d="M12 17v.1"/>',
+  flask: '<path d="M9 3h6"/><path d="M10 3v6.5L4.6 18.4A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.4-2.6L14 9.5V3"/><path d="M7.5 15h9"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/>',
 };
 

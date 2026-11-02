@@ -1,249 +1,328 @@
-/** PARADOX — punkt wejścia: stan, routing (hash), zdarzenia. */
-import { BIO_NODES, GRAPHS, getMission, getSubject } from './data.js';
-import { grade, routeCost, readProgress, saveProgress, matchTopic } from './engine.js';
-import { defaultAnswer, isAnswerEmpty, linearPlot, equation, pointChecks, dijkstraTrace } from './activities.js';
-import { layout, homeView, labsView, subjectView, missionView, progressView, notFound } from './views.js';
-
+/** PARADOX ErrorLab: stan, routing (hash), zdarzenia. */
+import { SKILLS, BUGS, makeTask } from './catalog.js';
+import { fmtSet, pretty } from './math.js';
+import { checkStep, checkAnswer, checkFix, judgeExplanation, kubaReply } from './check.js';
+import { loadLearner, saveLearner, emptyLearner, record, noteBug, resolveBug, quickRound, assignCondition, startTrial, finishTrial } from './learner.js';
+import { initExperiment, updateExperiment, renderExperimentLive } from './experiments.js';
+import { layout, homeView, lineView, solveView, fixView, kubaView, labView, roundView, trapsView, progressView, notFound, previewText, answerPlot } from './views.js';
 
 const root = document.querySelector('#app');
-const progress = readProgress();
-const state = {
-  route: { name: 'home' },
-  filter: 'all',
-  session: null,
-  ai: { online: false, model: '' },
-  plan: { query: '', result: null, loading: false },
-  toast: null,
-};
+const COMPARE_KEY = 'paradox.errorlab.compare';
+let learner = loadLearner();
+const state = { route: { name: 'home' }, session: null, lab: null, round: null, toast: null, compare: readCompare(), focus: false };
 let toastTimer = null;
+
+function readCompare() { try { return localStorage.getItem(COMPARE_KEY) === '1'; } catch { return false; } }
+const persist = () => { if (!saveLearner(learner)) toast('Przeglądarka blokuje zapis. Postępy zostaną tylko do zamknięcia karty.'); };
+const newSeed = () => 1 + Math.floor(Math.random() * 1e6);
+const correctText = t => (t.kind === 'set' ? fmtSet(t.answer.set) : pretty(t.steps.at(-1)));
 
 /* ---------- Routing ---------- */
 
 export function parseRoute(hash) {
-  const parts = String(hash || '').replace(/^#\/?/, '').split('/').filter(Boolean);
-  if (!parts.length) return { name: 'home' };
-  if (parts[0] === 'labs') return parts[1] ? { name: 'subject', id: parts[1] } : { name: 'labs' };
-  if (parts[0] === 'm' && parts[1]) return { name: 'mission', id: parts[1] };
-  if (parts[0] === 'progress') return { name: 'progress' };
+  const p = String(hash || '').replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  if (!p.length) return { name: 'home' };
+  if (p[0] === 'linia' && p[1]) return { name: 'line', id: p[1] };
+  if (p[0] === 'u' && p[1]) return { name: 'skill', id: p[1], mode: p[2] === 'napraw' ? 'fix' : p[2] === 'kuba' ? 'kuba' : 'solve', bug: p[3] || null };
+  if (p[0] === 'lab' && p[1] && p[2]) return { name: 'lab', id: p[1], bug: p[2] };
+  if (p[0] === 'runda') return { name: 'round' };
+  if (p[0] === 'pulapki') return { name: 'traps' };
+  if (p[0] === 'postepy') return { name: 'progress' };
   return { name: 'missing' };
 }
 
-function newSession(id) {
-  const m = getMission(id);
-  return m ? { id, answer: defaultAnswer(m), result: null, hint: false, hintsUsed: 0, trace: null, aiQ: '', aiA: '', aiLoading: false } : null;
+function newSession(skill, mode, bug = null) {
+  if (!SKILLS[skill]) return null;
+  if (mode === 'fix' && SKILLS[skill].answerOnly) mode = 'solve';
+  const seed = newSeed();
+  const task = makeTask(skill, seed, bug && SKILLS[skill].bugIds.includes(bug) ? bug : null);
+  const pick = bug && task.bugs.some(b => b.id === bug) ? bug : task.bugs[seed % task.bugs.length].id;
+  return {
+    task, mode, input: '', lines: [], done: false, hint: 0, hadWrong: false, answerResult: null,
+    fixBug: pick, fixSel: null, fixInput: '', fixResult: null, fixFailed: false,
+    kuba: { bug: pick, chat: [], known: [], understood: false, draft: '' },
+  };
+}
+
+function newLab(skill, bug) {
+  if (!SKILLS[skill] || !BUGS[bug] || !SKILLS[skill].bugIds.includes(bug)) return null;
+  const task = makeTask(skill, newSeed(), bug);
+  const condition = state.compare ? assignCondition(learner) : 'experiment';
+  const trial = state.compare ? startTrial(learner, { bug, skill, condition }) : null;
+  if (trial) persist();
+  return { skill, bug, stage: 'help', condition, trialId: trial?.id || null, task, exp: initExperiment(task, bug), chat: [], known: [], understood: false, draft: '', transfer: null, input: '', msg: null };
+}
+
+function newRound() {
+  const items = quickRound(learner);
+  return { items, i: 0, task: makeTask(items[0].skill, newSeed(), items[0].bug), input: '', results: [], feedback: null, msg: null };
 }
 
 function onRoute() {
-  const route = parseRoute(globalThis.location?.hash);
-  const changed = route.name !== state.route.name || route.id !== state.route.id;
-  state.route = route;
-  if (route.name === 'mission' && state.session?.id !== route.id) state.session = newSession(route.id);
+  const r = parseRoute(globalThis.location?.hash);
+  const changed = JSON.stringify(r) !== JSON.stringify(state.route);
+  state.route = r;
+  if (r.name === 'skill' && (changed || !state.session)) state.session = newSession(r.id, r.mode, r.bug);
+  if (r.name === 'lab' && (changed || !state.lab)) state.lab = newLab(r.id, r.bug);
+  if (r.name === 'round' && (!state.round || state.round.i >= state.round.items.length)) state.round = newRound();
   render();
   if (changed) {
-    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch { /* środowisko bez przewijania */ }
-    const titles = { home: 'Start', labs: 'Laboratoria', progress: 'Postępy', subject: getSubject(route.id)?.name, mission: getMission(route.id)?.title };
-    if (globalThis.document) document.title = `${titles[route.name] || 'PARADOX'} · PARADOX`;
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch { /* brak przewijania */ }
+    const t = { home: 'Mapa', line: 'Dział', skill: SKILLS[r.id]?.name, lab: BUGS[r.bug]?.name, round: 'Szybka runda', traps: 'Pułapki', progress: 'Postępy' }[r.name];
+    if (globalThis.document) document.title = `${t || 'PARADOX'} · PARADOX ErrorLab`;
   }
 }
 
 /* ---------- Render ---------- */
 
 function page() {
-  const ctx = { state, progress };
+  const ctx = { state, learner };
   const r = state.route;
   if (r.name === 'home') return homeView(ctx);
-  if (r.name === 'labs') return labsView(ctx);
-  if (r.name === 'subject') return subjectView(ctx, r.id);
-  if (r.name === 'mission') return state.session ? missionView(ctx, r.id) : notFound();
+  if (r.name === 'line') return lineView(ctx, r.id);
+  if (r.name === 'skill') {
+    if (!state.session) return notFound();
+    return { solve: solveView, fix: fixView, kuba: kubaView }[state.session.mode](ctx);
+  }
+  if (r.name === 'lab') return state.lab ? labView(ctx) : notFound();
+  if (r.name === 'round') return roundView(ctx);
+  if (r.name === 'traps') return trapsView(ctx);
   if (r.name === 'progress') return progressView(ctx);
   return notFound();
 }
 
 function render() {
-  root.innerHTML = layout({ state, progress }, page());
-  // Animacja „wejścia” tylko przy pierwszym pokazaniu elementu.
-  if (state.session) state.session.fresh = false;
-  state.plan.fresh = false;
+  root.innerHTML = layout({ state, learner }, page());
+  if (state.focus) {
+    state.focus = false;
+    root.querySelector?.('[data-autofocus]')?.focus?.();
+  }
 }
 
 function toast(message) {
   state.toast = message;
   render();
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { state.toast = null; render(); }, 3800);
+  toastTimer = setTimeout(() => { state.toast = null; render(); }, 4200);
   toastTimer.unref?.();
 }
 
-/* ---------- Ćwiczenia ---------- */
+/* ---------- Akcje: krok po kroku ---------- */
 
-const mission = () => state.session && getMission(state.session.id);
-
-function invalidate() {
-  const s = state.session;
-  s.result = null;
-  s.trace = null;
+function finishSolve(s) {
+  s.done = true;
+  record(learner, { skill: s.task.skill, mode: 'solve', correct: !s.hadWrong && s.hint < 2 });
+  persist();
 }
 
-function selectNode(id) {
-  const m = mission(), s = state.session;
-  if (!m || s.trace) return;
-  const path = s.answer.path;
-  if (m.type === 'path') {
-    if (!BIO_NODES.some(n => n.id === id)) return;
-    if (path.at(-1) === id) { path.pop(); invalidate(); render(); return; }
-    const closesLoop = id === m.params.path[0] && path.length === m.params.path.length - 1;
-    if (path.includes(id) && !closesLoop) { toast('Ta struktura jest już na trasie. Cofnij krok albo wyczyść trasę.'); return; }
-    path.push(id);
-  } else if (m.type === 'graph') {
-    const graph = GRAPHS[m.params.graph];
-    if (id === path.at(-1) && path.length > 1) { path.pop(); }
-    else if (id === path.at(-2)) { path.pop(); }
-    else {
-      if (path.includes(id)) { toast('Ten węzeł już jest na trasie.'); return; }
-      if (routeCost(graph, [path.at(-1), id]) === null) { toast(`Z ${path.at(-1)} nie ma bezpośredniej krawędzi do ${id}.`); return; }
-      path.push(id);
-    }
-  } else return;
-  invalidate();
+function stepAdd() {
+  const s = state.session, text = s.input.trim();
+  if (!text) { toast('Wpisz krok rozwiązania.'); return; }
+  const res = checkStep(s.task, text);
+  if (res.status === 'parse' || res.status === 'kind') { toast(res.error); return; }
+  if (res.status === 'ok') {
+    s.lines.push({ text, status: 'ok', done: res.done });
+    s.input = '';
+    if (res.done) finishSolve(s);
+  } else {
+    s.lines.push({ text, status: 'wrong', bug: res.bug });
+    s.hadWrong = true;
+    if (res.bug) { noteBug(learner, res.bug); persist(); }
+  }
+  state.focus = true;
   render();
 }
 
-function check() {
-  const m = mission(), s = state.session;
-  if (!m) return;
-  if (isAnswerEmpty(m, s.answer)) { toast('Najpierw zbuduj odpowiedź.'); return; }
-  s.trace = null;
-  s.result = grade(m, s.answer);
-  s.fresh = true;
-  progress.attempts.push({ missionId: m.id, correct: s.result.correct, hintsUsed: s.hintsUsed, at: new Date().toISOString() });
-  if (!saveProgress(progress)) toast('Przeglądarka blokuje zapis — postępy zostaną tylko do zamknięcia karty.');
-  else render();
+function answerCheck() {
+  const s = state.session;
+  const res = checkAnswer(s.task, s.input);
+  if (res.status === 'parse' || res.status === 'kind') { toast(res.error); return; }
+  if (res.status === 'unfinished') { toast('To jeszcze nie jest wynik. Zapisz wzór w postaci y = ax + b.'); return; }
+  if (res.status === 'ok') { s.answerResult = null; finishSolve(s); }
+  else {
+    s.hadWrong = true;
+    s.answerResult = res.bug ? `To nie ten wzór. Wygląda na pułapkę ${res.bug}: ${BUGS[res.bug].name}.` : 'To nie ten wzór. Sprawdź, czy prosta przechodzi przez oba punkty.';
+    if (res.bug) { noteBug(learner, res.bug); persist(); }
+  }
+  render();
 }
 
-function setSlider(key, value) {
-  const m = mission(), s = state.session;
-  if (!m || m.type !== 'linear') return;
-  const limits = key === 'a' ? [-4, 4] : [-5, 5];
-  s.answer[key] = Math.max(limits[0], Math.min(limits[1], value));
-  const hadResult = !!s.result;
-  invalidate();
-  // Aktualizacja punktowa — nie przerywa przeciągania suwaka.
-  const q = sel => root.querySelector?.(sel);
-  const plot = q('#plot');
-  if (!plot || hadResult) { render(); return; }
-  plot.innerHTML = linearPlot(m, s.answer);
-  q('#eq').innerHTML = equation(s.answer);
-  q('#pt-checks').innerHTML = pointChecks(m, s.answer);
-  q(`#o-${key}`).textContent = String(s.answer[key]).replace('-', '−');
-  const input = q(`#s-${key}`);
-  if (input && Number(input.value) !== s.answer[key]) input.value = s.answer[key];
+/* ---------- Akcje: napraw błąd, Kuba ---------- */
+
+function fixLine(i) {
+  const s = state.session, bug = s.task.bugs.find(b => b.id === s.fixBug);
+  if (i !== bug.idx) { s.fixFailed = true; s.fixSel = null; s.fixResult = checkFix(s.task, bug, i, ''); }
+  else { s.fixSel = i; s.fixResult = null; state.focus = true; }
+  render();
 }
 
-/* ---------- AI ---------- */
-
-async function probeAI() {
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 2500);
-    const r = await fetch('/api/health', { signal: ctrl.signal });
-    clearTimeout(t);
-    if (!r.ok) return;
-    const body = await r.json();
-    state.ai = { online: body.aiAvailable === true, model: String(body.model || '') };
-    if (state.ai.online) render();
-  } catch { state.ai = { online: false, model: '' }; }
+function fixCheck() {
+  const s = state.session, bug = s.task.bugs.find(b => b.id === s.fixBug);
+  const res = checkFix(s.task, bug, s.fixSel, s.fixInput);
+  if (res.status === 'parse') { toast(res.message); return; }
+  s.fixResult = res;
+  if (res.status === 'ok') { record(learner, { skill: s.task.skill, mode: 'fix', correct: !s.fixFailed }); persist(); }
+  else s.fixFailed = true;
+  render();
 }
 
-async function plan(topic) {
-  const value = String(topic || '').trim();
-  if (!value) { toast('Wpisz temat, którego chcesz się nauczyć.'); return; }
-  state.plan.query = value;
-  if (!state.ai.online) { state.plan.result = { ...matchTopic(value), mode: 'offline' }; state.plan.fresh = true; render(); return; }
-  state.plan.loading = true; state.plan.result = null; render();
-  try {
-    const r = await fetch('/api/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic: value }) });
-    const body = await r.json();
-    if (!r.ok) throw Error(body.error);
-    state.plan.result = { supported: body.supported === true, subject: body.subject || null, reason: String(body.reason || '').slice(0, 500), mode: 'ai' };
-  } catch {
-    state.plan.result = { ...matchTopic(value), mode: 'offline' };
-  } finally { state.plan.loading = false; state.plan.fresh = true; render(); }
+/** k: obiekt z polami bug, chat, known, understood, draft (sesja albo laboratorium). */
+function kubaSend(k, onUnderstood) {
+  const text = k.draft.trim();
+  if (!text) { toast('Napisz Kubie wyjaśnienie.'); return; }
+  const judged = judgeExplanation(k.bug, text);
+  const reply = kubaReply(k.bug, k.known, judged);
+  k.chat.push({ who: 'you', text });
+  k.known = reply.known;
+  if (reply.understood) { k.understood = true; k.chat.push({ who: 'kuba', text: BUGS[k.bug].kuba.success }); onUnderstood?.(); }
+  else k.chat.push({ who: 'kuba', text: reply.text });
+  k.draft = '';
+  state.focus = true;
+  render();
 }
 
-async function askTutor(question) {
-  const m = mission(), s = state.session;
-  const q = String(question || '').trim();
-  if (!m || !state.ai.online || s.aiLoading) return;
-  if (!q) { toast('Wpisz pytanie do tutora.'); return; }
-  s.aiQ = q; s.aiLoading = true; s.aiA = ''; render();
-  try {
-    const r = await fetch('/api/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, context: { subject: getSubject(m.subject).name, task: m.prompt, hint: m.hint, explanation: m.explanation, attempt: s.answer, result: s.result?.correct ?? null } }) });
-    const body = await r.json();
-    if (!r.ok) throw Error(body.error || 'Błąd połączenia');
-    s.aiA = String(body.reply).slice(0, 2400);
-  } catch (e) {
-    s.aiA = `Nie udało się uzyskać odpowiedzi: ${e.message}. Skorzystaj z podpowiedzi albo spróbuj ponownie.`;
-  } finally { s.aiLoading = false; if (state.session === s) render(); }
+/* ---------- Akcje: laboratorium ---------- */
+
+function labNext() {
+  const lab = state.lab;
+  if (lab.stage === 'help') lab.stage = 'kuba';
+  else if (lab.stage === 'kuba') { lab.stage = 'transfer'; lab.transfer = makeTask(lab.skill, newSeed(), lab.bug); lab.input = ''; state.focus = true; }
+  render();
+}
+
+function labAnswer() {
+  const lab = state.lab;
+  const res = checkAnswer(lab.transfer, lab.input);
+  if (res.status === 'parse' || res.status === 'kind') { lab.msg = res.error; render(); return; }
+  if (res.status === 'unfinished') { lab.msg = 'To jeszcze nie jest wynik. Doprowadź odpowiedź do końca.'; render(); return; }
+  const ok = res.status === 'ok';
+  record(learner, { skill: lab.skill, mode: 'transfer', correct: ok, bug: res.bug || null });
+  if (ok) resolveBug(learner, lab.bug);
+  if (lab.trialId) finishTrial(learner, lab.trialId, ok);
+  persist();
+  Object.assign(lab, { stage: 'done', outcome: ok, msg: null, answerText: pretty(lab.input), correctText: correctText(lab.transfer), repeat: res.bug ? `${res.bug}: ${BUGS[res.bug].name}` : null });
+  render();
+}
+
+/* ---------- Akcje: szybka runda ---------- */
+
+function roundCheck() {
+  const r = state.round, t = r.task;
+  const res = checkAnswer(t, r.input);
+  if (res.status === 'parse' || res.status === 'kind') { r.msg = res.error; render(); return; }
+  if (res.status === 'unfinished') { r.msg = 'To jeszcze nie jest wynik. Podaj odpowiedź w końcowej postaci.'; render(); return; }
+  const correct = res.status === 'ok';
+  record(learner, { skill: t.skill, mode: 'round', correct, bug: res.bug || null });
+  persist();
+  r.results.push({ skill: t.skill, correct, bug: res.bug || null });
+  r.msg = null;
+  r.feedback = { correct, text: correct ? `Wynik: ${correctText(t)}.` : `${res.bug ? `To pułapka ${res.bug}: ${BUGS[res.bug].name}. ` : ''}Poprawny wynik: ${correctText(t)}.` };
+  state.focus = true;
+  render();
+}
+
+function roundNext() {
+  const r = state.round;
+  r.i += 1; r.feedback = null; r.input = ''; r.msg = null;
+  if (r.i < r.items.length) r.task = makeTask(r.items[r.i].skill, newSeed(), r.items[r.i].bug);
+  state.focus = true;
+  render();
 }
 
 /* ---------- Zdarzenia ---------- */
 
-function onClick(event) {
-  const el = event.target.closest?.('[data-act],[data-node],[data-choice]');
-  if (!el) return;
-  const s = state.session;
-  if (el.dataset.node) { selectNode(el.dataset.node); return; }
-  if (el.dataset.choice !== undefined && s) { s.answer.selected = Number(el.dataset.choice); invalidate(); render(); return; }
-  const act = el.dataset.act;
-  if (act === 'filter') { state.filter = el.dataset.value; render(); }
-  else if (act === 'plan-try') { plan(el.dataset.topic); }
-  else if (act === 'check') check();
-  else if (act === 'restart' && s) { state.session = newSession(s.id); render(); }
-  else if (act === 'hint' && s) { s.hint = !s.hint; s.fresh = s.hint; if (s.hint) s.hintsUsed = 1; render(); }
-  else if (act === 'nudge' && s) setSlider(el.dataset.key, s.answer[el.dataset.key] + Number(el.dataset.delta));
-  else if (act === 'undo' && s) { const m = mission(); if (s.answer.path.length > (m.type === 'graph' ? 1 : 0)) { s.answer.path.pop(); invalidate(); render(); } }
-  else if (act === 'clear' && s) { s.answer.path = []; invalidate(); render(); }
-  else if (act === 'trace' && s) { const m = mission(); s.trace = { steps: dijkstraTrace(GRAPHS[m.params.graph], m.params.start), index: 0 }; render(); }
-  else if (act === 'trace-next' && s?.trace) { s.trace.index = Math.min(s.trace.steps.length - 1, s.trace.index + 1); render(); }
-  else if (act === 'trace-prev' && s?.trace) { s.trace.index = Math.max(0, s.trace.index - 1); render(); }
-  else if (act === 'trace-close' && s) { s.trace = null; render(); }
-  else if (act === 'clear-progress') {
-    if (window.confirm('Usunąć wszystkie wyniki zapisane w tej przeglądarce?')) { progress.attempts = []; saveProgress(progress); render(); }
+function insertSymbol(el) {
+  const input = globalThis.document?.getElementById?.(el.dataset.target);
+  if (!input) return;
+  const ins = el.dataset.ins, start = input.selectionStart ?? input.value.length, end = input.selectionEnd ?? start;
+  if (input.setRangeText) input.setRangeText(ins, start, end, 'end'); else input.value += ins;
+  input.focus();
+  onInput({ target: input });
+}
+
+function act(name, el = { dataset: {} }) {
+  const s = state.session, lab = state.lab;
+  if (name === 'step-add') stepAdd();
+  else if (name === 'answer-check') answerCheck();
+  else if (name === 'hint' && s) { s.hint = s.hint ? 0 : 1; render(); }
+  else if (name === 'hint-step' && s) { s.hint = 2; render(); }
+  else if (name === 'new-task' && s) { state.session = newSession(s.task.skill, s.mode); render(); }
+  else if (name === 'fix-line' && s) fixLine(Number(el.dataset.i));
+  else if (name === 'fix-check' && s) fixCheck();
+  else if (name === 'kuba-send') {
+    if (state.route.name === 'lab' && lab) kubaSend(lab, null);
+    else if (s) kubaSend(s.kuba, () => { record(learner, { skill: s.task.skill, mode: 'kuba', correct: true }); persist(); });
+  }
+  else if (name.startsWith('exp-') && lab) { updateExperiment(lab.task, lab.exp, name.slice(4), el.dataset.key ?? el.dataset.value); render(); }
+  else if (name === 'lab-next' && lab) labNext();
+  else if (name === 'lab-answer' && lab) labAnswer();
+  else if (name === 'lab-restart' && lab) { state.lab = newLab(lab.skill, lab.bug); render(); }
+  else if (name === 'round-check') roundCheck();
+  else if (name === 'round-next') roundNext();
+  else if (name === 'round-new') { state.round = newRound(); render(); }
+  else if (name === 'compare-toggle') { state.compare = !!el.checked; try { localStorage.setItem(COMPARE_KEY, state.compare ? '1' : '0'); } catch { /* tryb prywatny */ } render(); }
+  else if (name === 'export') exportData();
+  else if (name === 'clear-progress') {
+    if (window.confirm('Usunąć wszystkie wyniki i dane porównania zapisane w tej przeglądarce?')) { learner = emptyLearner(); persist(); render(); }
   }
 }
 
-function onSubmit(event) {
-  const form = event.target.closest?.('form[data-form]');
-  if (!form) return;
-  event.preventDefault();
-  const field = form.querySelector('input,textarea');
-  if (form.dataset.form === 'plan') plan(field?.value);
-  if (form.dataset.form === 'tutor') askTutor(field?.value);
+function onClick(event) {
+  const el = event.target.closest?.('[data-act]');
+  if (!el) return;
+  if (el.dataset.act === 'key') { event.preventDefault?.(); insertSymbol(el); return; }
+  act(el.dataset.act, el);
 }
 
 function onInput(event) {
-  const t = event.target;
-  if (t.dataset?.slider) setSlider(t.dataset.slider, Number(t.value));
-  else if (t.id === 'plan-input') state.plan.query = t.value;
-  else if (t.id === 'tutor-input' && state.session) state.session.aiQ = t.value;
+  const t = event.target, d = t.dataset || {};
+  const s = state.session, lab = state.lab, r = state.round;
+  if (d.math) {
+    const v = t.value;
+    if (d.math === 'step' || d.math === 'answer') s.input = v;
+    if (d.math === 'fix') s.fixInput = v;
+    if (d.math === 'transfer') lab.input = v;
+    if (d.math === 'round') r.input = v;
+    const pv = root.querySelector?.(`#pv-${d.math}`);
+    if (pv) pv.innerHTML = previewText(v);
+    const task = d.math === 'answer' ? s.task : d.math === 'transfer' ? lab.transfer : d.math === 'round' ? r.task : null;
+    const ap = root.querySelector?.('#answer-plot');
+    if (task?.points && ap) ap.outerHTML = answerPlot(task, v);
+    return;
+  }
+  if ('kuba' in d) { if (state.route.name === 'lab' && lab) lab.draft = t.value; else if (s) s.kuba.draft = t.value; return; }
+  if (d.exp && lab) {
+    updateExperiment(lab.task, lab.exp, d.exp, t.value);
+    const out = t.parentElement?.querySelector?.('output');
+    if (out) out.textContent = String(t.value).replace('-', '−');
+    const live = root.querySelector?.('#exp-live');
+    if (live) live.innerHTML = renderExperimentLive(lab.task, lab.exp);
+    return;
+  }
+  if (d.expInput && lab) lab.exp[d.expInput] = t.value;
 }
 
 function onKey(event) {
   const t = event.target;
-  const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA');
-  const node = t?.closest?.('[data-node]');
-  if (node && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); selectNode(node.dataset.node); return; }
-  if (typing || event.ctrlKey || event.metaKey || event.altKey) return;
-  const m = mission();
-  if (state.route.name !== 'mission' || !m) return;
-  if (m.type === 'choice' && /^[1-4]$/.test(event.key)) { state.session.answer.selected = Number(event.key) - 1; invalidate(); render(); }
+  if (event.key !== 'Enter' || !t?.dataset) return;
+  if (t.dataset.submit) { event.preventDefault(); act(t.dataset.submit); }
+  else if ('kuba' in t.dataset && (event.ctrlKey || event.metaKey)) { event.preventDefault(); act('kuba-send'); }
+}
+
+function exportData() {
+  const doc = globalThis.document;
+  if (!doc?.createElement || !globalThis.Blob || !globalThis.URL?.createObjectURL) { toast('Eksport nie jest dostępny w tej przeglądarce.'); return; }
+  const blob = new Blob([JSON.stringify({ exported: new Date().toISOString(), ...learner }, null, 2)], { type: 'application/json' });
+  const a = doc.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `paradox-errorlab-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 root.addEventListener('click', onClick);
-root.addEventListener('submit', onSubmit);
 root.addEventListener('input', onInput);
-window.addEventListener?.('keydown', onKey);
+root.addEventListener('keydown', onKey);
 window.addEventListener?.('hashchange', onRoute);
 
 onRoute();
-probeAI();

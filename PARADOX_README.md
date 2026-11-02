@@ -31,15 +31,19 @@ Aby wybrać inny model, ustaw zmienną środowiskową `OLLAMA_MODEL` (np. PowerS
 
 **Ważne:** model językowy tłumaczy i podpowiada, ale *nie ocenia* odpowiedzi. Poprawność sprawdzają deterministyczne moduły z `engine.js`. Gdy Ollama nie działa, ćwiczenia, wskazówki i zapis postępów nadal działają. Wersja udostępniona przez GitHub Pages nie może korzystać bezpośrednio z lokalnej Ollama innego użytkownika — potrzebuje własnego backendu.
 
-## Co działa
+## Co działa (frontend ErrorLab)
 
-- Matematyka: regulowany wykres funkcji liniowej, trzy zadania, dokładna weryfikacja współczynników.
-- Biologia: interaktywna mapa dwóch obiegów krwi; sprawdzanie kolejności struktur.
-- Angielski: trzy oryginalne sceny śledztwa do ćwiczenia Past Perfect / Continuous.
-- Informatyka: trzy grafy ważone, samodzielne układanie trasy, sprawdzanie przez algorytm Dijkstry i podgląd jego działania krok po kroku.
-- Pulpit, katalog, ścieżki tematyczne, adaptacyjne proponowanie powtórek po błędnych próbach, statystyki oraz trwała historia w `localStorage`.
-- Dobór szablonu nauki na podstawie wpisanego tematu: przez lokalne AI lub jawne reguły offline. Nieobsługiwane tematy nie są pozorowane jako działające.
-- Opcjonalny lokalny tutor (Qwen/Ollama) przez bezpieczny serwer HTTP w Node.js; bez umieszczania kluczy w frontendzie.
+Aktualny frontend to **PARADOX ErrorLab**: matematyka na maturze podstawowej, zbudowana wokół katalogu typowych błędów.
+
+- **Silnik matematyczny** (`math.js`, bez zależności): parsuje zapis ucznia, porównuje wyrażenia, wyznacza zbiory rozwiązań równań i nierówności stopnia ≤ 2. Każdy krok jest sprawdzany deterministycznie.
+- **Katalog 17 pułapek** (`catalog.js`), np. (a + b)² = a² + b², brak zmiany zwrotu nierówności, odwrócone przedziały paraboli. Każda pułapka jest regułą wykonywaną na zadaniu, więc silnik rozpoznaje ją w krokach ucznia.
+- **12 umiejętności w 4 działach** z generatorami zadań. Testy sprawdzają, że każdy wzorcowy krok jest równoważny, a każda pułapka psuje wynik dokładnie w zadeklarowanym kroku.
+- **Tryby:** krok po kroku, „Napraw błąd” (cudze rozwiązanie z jednym błędem), „Naucz Kubę” (symulowany uczeń z kontrolowanym błędem), szybka runda.
+- **Laboratorium błędu:** diagnoza → eksperyment dobrany do pułapki (5 szablonów konfigurowanych liczbami z zadania) → Kuba → zadanie sprawdzające bez podpowiedzi.
+- **Model ucznia** (`learner.js`): Bayesian Knowledge Tracing, stan pułapek, powtórki w odstępach.
+- **Tryb porównawczy:** losowy przydział „wskazówka tekstowa vs eksperyment” i wynik zadania sprawdzającego, z eksportem danych do pilotażu.
+
+Ograniczenie tej wersji: Kuba ocenia wyjaśnienia na podstawie słów kluczowych (offline). Ocena przez model językowy wymaga backendu i nie jest jeszcze podłączona. Pole `source` w katalogu pułapek trzeba uzupełnić o konkretne sprawozdania CKE.
 
 ## Co pozostaje poza zakresem prototypu
 
@@ -53,18 +57,19 @@ Nie przedstawiaj prototypu jako ukończonego „World Compilera” ani jako apli
 ## Struktura
 
 ```text
-docs/app/index.html          Punkt wejścia, bez zewnętrznych zależności
-docs/app/assets/style.css    Interfejs w stylu mapy metra, wersja mobilna
-docs/app/assets/fonts/       Overpass (OFL), dołączony lokalnie do pracy offline
-docs/app/src/data.js         Autorskie zadania i grafy
-docs/app/src/engine.js       Sprawdzanie, Dijkstra, postęp
-docs/app/src/app.js          Stan, routing (#/…), zdarzenia
-docs/app/src/views.js        Widoki: start, przedmioty, misja, postępy
-docs/app/src/art.js          Mapa linii nauki na stronie startowej
-docs/app/src/activities.js   Ćwiczenia: wykres, krążenie, śledztwo, graf + podgląd Dijkstry
-docs/app/src/ui.js           Ikony i drobne komponenty
-server/server.mjs            HTTP i integracja Ollama
-tests/*.test.mjs             Testy logiki, serwera, AI i interfejsu
+docs/app/index.html            Punkt wejścia
+docs/app/assets/style.css      Interfejs w stylu mapy metra, wersja mobilna
+docs/app/assets/fonts/         Overpass (OFL), lokalnie
+docs/app/src/math.js           Silnik: parser, równoważność, zbiory rozwiązań
+docs/app/src/catalog.js        Działy, umiejętności, pułapki, generatory zadań
+docs/app/src/check.js          Sprawdzanie kroków, poprawek i wyjaśnień
+docs/app/src/learner.js        Model ucznia, powtórki, porównanie warunków
+docs/app/src/experiments.js    Eksperymenty dobierane do pułapek
+docs/app/src/views.js          Widoki
+docs/app/src/app.js            Stan, routing, zdarzenia
+docs/app/src/art.js            Mapa metra
+server/server.mjs              HTTP i integracja Ollama
+tests/*.test.mjs               Testy silnika, katalogu, interfejsu i serwera
 ```
 
 ## Weryfikacja

@@ -1,95 +1,112 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-// Minimalne środowisko DOM: sprawdza routing, montowanie widoków i interakcje
-// niezależnie od dostępności przeglądarki w CI.
+// Minimalne środowisko DOM: routing, montowanie widoków i interakcje bez przeglądarki.
 const handlers = {}, winHandlers = {};
 const root = { innerHTML: '', addEventListener: (type, fn) => { handlers[type] = fn; }, querySelector: () => null };
 globalThis.document = { querySelector: () => root, title: '' };
 globalThis.location = { hash: '' };
 globalThis.window = { scrollTo: () => {}, confirm: () => true, addEventListener: (type, fn) => { winHandlers[type] = fn; } };
-globalThis.fetch = async () => { throw Error('Tryb statyczny'); };
 const { parseRoute } = await import('../docs/app/src/app.js');
+const { makeTask } = await import('../docs/app/src/catalog.js');
 
 const go = hash => { location.hash = hash; winHandlers.hashchange(); };
 const click = dataset => handlers.click({ target: { closest: () => ({ dataset }) }, preventDefault: () => {} });
+const type = (name, value) => handlers.input({ target: { value, dataset: { math: name } } });
+const typeKuba = value => handlers.input({ target: { value, dataset: { kuba: '' } } });
+const html = () => root.innerHTML;
+const taskFromView = skill => {
+  // Zadanie w widoku jest losowe; odczytujemy je z dużego zapisu „statement”.
+  const m = html().match(/<p class="statement">([^<]+)<\/p>/);
+  return m ? m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&') : null;
+};
 
 test('routing rozpoznaje adresy', () => {
   assert.deepEqual(parseRoute(''), { name: 'home' });
-  assert.deepEqual(parseRoute('#/labs'), { name: 'labs' });
-  assert.deepEqual(parseRoute('#/labs/math'), { name: 'subject', id: 'math' });
-  assert.deepEqual(parseRoute('#/m/math-1'), { name: 'mission', id: 'math-1' });
-  assert.deepEqual(parseRoute('#/progress'), { name: 'progress' });
+  assert.deepEqual(parseRoute('#/linia/rownania'), { name: 'line', id: 'rownania' });
+  assert.deepEqual(parseRoute('#/u/zwrot'), { name: 'skill', id: 'zwrot', mode: 'solve', bug: null });
+  assert.deepEqual(parseRoute('#/u/zwrot/napraw'), { name: 'skill', id: 'zwrot', mode: 'fix', bug: null });
+  assert.deepEqual(parseRoute('#/lab/zwrot/B10'), { name: 'lab', id: 'zwrot', bug: 'B10' });
+  assert.equal(parseRoute('#/runda').name, 'round');
   assert.equal(parseRoute('#/xyz').name, 'missing');
 });
 
-test('strona startowa pokazuje mapę 4 linii i planer', () => {
+test('mapa: 4 działy, mapa metra i trzy tryby', () => {
   go('#/');
-  assert.match(root.innerHTML, /Twoja mapa nauki/);
-  assert.match(root.innerHTML, /class="metro"/);
-  assert.match(root.innerHTML, /Czego chcesz się dziś nauczyć/);
-  for (const name of ['Matematyka', 'Biologia', 'Angielski', 'Informatyka']) assert.ok(root.innerHTML.includes(name));
+  assert.match(html(), /Matura z matematyki bez pułapek/);
+  assert.match(html(), /class="metro"/);
+  for (const n of ['Wyrażenia', 'Równania', 'Nierówności', 'Funkcja liniowa', 'Krok po kroku', 'Napraw błąd', 'Naucz Kubę']) assert.ok(html().includes(n), n);
 });
 
-test('planer offline dobiera szablon i nie udaje nieobsługiwanych tematów', () => {
-  click({ act: 'plan-try', topic: 'krążenie krwi' });
-  assert.match(root.innerHTML, /Biologia: układ krążenia/);
-  assert.match(root.innerHTML, /href="#\/m\/biology-1"/);
-  click({ act: 'plan-try', topic: 'fotosynteza' });
-  assert.match(root.innerHTML, /Tego tematu jeszcze nie ma/);
+test('krok po kroku: błędny krok rozpoznany jako pułapka, poprawny prowadzi do wyniku', () => {
+  go('#/u/zwrot');
+  assert.match(html(), /Zmiana zwrotu/);
+  const st = taskFromView();
+  assert.ok(st, 'widać zadanie');
+  // Odtwarzamy zadanie z tego samego zapisu przez wpisanie kroków generatora o tym samym ziarnie nie jest możliwe,
+  // więc sprawdzamy na wyniku pułapki: w nierówności b − ax op c brak zmiany zwrotu.
+  const m = st.replace(/−/g, '-').match(/^(\d+) - (\d+)x (.) (-?\d+)$/);
+  const [, b, a, op, c] = m; const x0 = (Number(b) - Number(c)) / Number(a);
+  const wrong = `x ${op} ${x0}`, flip = { '>': '<', '<': '>', '≥': '≤', '≤': '≥' }[op];
+  type('step', wrong); click({ act: 'step-add' });
+  assert.match(html(), /pułapka B10/);
+  type('step', `x ${flip} ${x0}`); click({ act: 'step-add' });
+  assert.match(html(), /Rozwiązane/);
 });
 
-test('laboratoria, filtr i ścieżka przedmiotu', () => {
-  go('#/labs'); assert.match(root.innerHTML, /<h1>Przedmioty<\/h1>/);
-  click({ act: 'filter', value: 'Języki' });
-  assert.ok(root.innerHTML.includes('Angielski') && !root.innerHTML.includes('Algorytm Dijkstry'));
-  click({ act: 'filter', value: 'all' });
-  go('#/labs/math'); assert.match(root.innerHTML, /Przechwyć prostą/);
+test('napraw błąd: wskazanie złego kroku i poprawka', () => {
+  go('#/u/przenoszenie/napraw');
+  assert.match(html(), /Rozwiązanie Oli/);
+  click({ act: 'fix-line', i: '0' });
+  assert.match(html(), /Ten krok jest jeszcze poprawny/);
+  click({ act: 'fix-line', i: '1' });
+  assert.match(html(), /Jak powinien wyglądać krok 2/);
+  const st = taskFromView().replace(/−/g, '-');
+  const [, a, sign, b, c] = st.match(/^(\d+)x ([+-]) (\d+) = (-?\d+)$/);
+  type('fix', `${a}x = ${Number(c) - (sign === '+' ? 1 : -1) * Number(b)}`);
+  click({ act: 'fix-check' });
+  assert.match(html(), /Znalezione i poprawione/);
 });
 
-test('misja matematyczna: suwaki, sprawdzenie i zapis próby', () => {
-  go('#/m/math-1');
-  assert.match(root.innerHTML, /Wykres funkcji liniowej/);
-  click({ act: 'check' });
-  assert.match(root.innerHTML, /Jeszcze nie/);
-  click({ act: 'nudge', key: 'a', delta: '1' });
-  click({ act: 'nudge', key: 'b', delta: '1' });
-  click({ act: 'check' });
-  assert.match(root.innerHTML, /Dobrze!/);
-  assert.match(root.innerHTML, /Następna misja/);
+test('Kuba: rozmowa aż do zrozumienia', () => {
+  go('#/u/zwrot/kuba');
+  assert.match(html(), /Rozwiązanie Kuby/);
+  typeKuba('bo tak'); click({ act: 'kuba-send' });
+  assert.match(html(), /Możesz wytłumaczyć|nie przekonuje|W równaniach/i);
+  typeKuba('Dzielisz przez liczbę ujemną, więc musisz odwrócić zwrot nierówności'); click({ act: 'kuba-send' });
+  assert.match(html(), /Kuba zrozumiał/);
 });
 
-test('cztery typy ćwiczeń montują się bez błędu', () => {
-  for (const [id, label] of [['biology-1', 'Schemat układu krążenia'], ['english-1', 'Akta sprawy'], ['algorithms-1', 'Graf ważony'], ['math-2', 'Wykres funkcji liniowej']]) {
-    go(`#/m/${id}`); assert.match(root.innerHTML, new RegExp(label));
-  }
+test('laboratorium błędu: eksperyment, Kuba, zadanie sprawdzające', () => {
+  go('#/lab/zwrot/B10');
+  assert.match(html(), /Laboratorium błędu B10/);
+  assert.match(html(), /Mnożenie nierówności/);
+  assert.match(html(), /data-act="lab-next" disabled/);
+  click({ act: 'exp-k', value: '-2' });
+  handlers.input({ target: { value: '-2', dataset: { exp: 'k' } } });
+  handlers.input({ target: { value: '2', dataset: { exp: 'k' } } });
+  click({ act: 'exp-choice', value: '1' });
+  click({ act: 'exp-check' });
+  assert.match(html(), /Odkryte/);
+  click({ act: 'lab-next' });
+  assert.match(html(), /Rozwiązanie Kuby/);
+  click({ act: 'lab-next' });
+  assert.match(html(), /bez podpowiedzi/);
+  type('transfer', 'x > 100'); click({ act: 'lab-answer' });
+  assert.match(html(), /Pułapka jeszcze działa|Pułapka rozbrojona/);
 });
 
-test('graf: budowa trasy, ocena i podgląd Dijkstry', () => {
-  go('#/m/algorithms-1');
-  for (const n of ['C', 'B', 'D', 'E', 'F']) click({ node: n });
-  assert.match(root.innerHTML, /A → C → B → D → E → F/);
-  click({ act: 'check' });
-  assert.match(root.innerHTML, /Dobrze!/);
-  click({ act: 'trace' });
-  assert.match(root.innerHTML, /Algorytm Dijkstry krok po kroku/);
-  click({ act: 'trace-next' });
-  assert.match(root.innerHTML, /Wybieram A/);
-});
-
-test('angielski: wybór odpowiedzi', () => {
-  go('#/m/english-1');
-  click({ choice: '1' });
-  assert.match(root.innerHTML, /blank filled">had taken/);
-  click({ act: 'check' });
-  assert.match(root.innerHTML, /Dobrze!/);
-});
-
-test('postępy pokazują historię i nieznany adres daje 404', () => {
-  go('#/progress');
-  assert.match(root.innerHTML, /<h1>Postępy<\/h1>/);
-  assert.match(root.innerHTML, /Ostatnie próby/);
-  assert.match(root.innerHTML, /Kurier w mieście/);
-  go('#/m/nie-ma');
-  assert.match(root.innerHTML, /Nie ma takiej strony/);
+test('szybka runda, katalog pułapek, postępy i 404', () => {
+  go('#/runda');
+  assert.match(html(), /Szybka runda/);
+  type('round', 'x = 12345'); click({ act: 'round-check' });
+  assert.match(html(), /Źle\.|To jeszcze nie jest wynik|Każdy krok powinien|Tu każdy krok/);
+  go('#/pulapki');
+  assert.match(html(), /Katalog pułapek/);
+  assert.match(html(), /B13/);
+  go('#/postepy');
+  assert.match(html(), /Porównanie: wskazówka czy eksperyment/);
+  assert.match(html(), /Ostatnie próby/);
+  go('#/nie-ma');
+  assert.match(html(), /Nie ma takiej strony/);
 });
