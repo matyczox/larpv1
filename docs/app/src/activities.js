@@ -61,7 +61,7 @@ export function pointChecks(m, { a, b }) {
   const names = m.id === 'math-2' ? ['P', 'Q'] : ['A', 'B'];
   return m.params.points.map(([x, y], i) => {
     const hit = a * x + b === y;
-    return `<li class="${hit ? 'hit' : ''}">${icon(hit ? 'check' : 'target', 15)} ${names[i]} ${hit ? 'leży na prostej' : `— prosta daje y = ${fmt(a * x + b)}`}</li>`;
+    return `<li class="${hit ? 'hit' : ''}">${icon(hit ? 'check' : 'target', 15)} ${names[i]} ${hit ? 'leży na prostej' : `jest poza prostą (tu y = ${fmt(a * x + b)})`}</li>`;
   }).join('');
 }
 
@@ -130,10 +130,10 @@ function renderChoice(m, s) {
   const filled = sel === null ? '<span class="blank">&nbsp;?&nbsp;</span>' : `<span class="blank filled">${esc(m.params.options[sel])}</span>`;
   return `<div class="stage stage-case">
     <div class="case">
-      <div class="case-head"><span class="case-stamp">Akta sprawy · 0${m.level}</span><span class="case-meta">Sala 204 · 18:42</span></div>
+      <div class="case-head"><span class="case-stamp">Akta sprawy nr ${m.level}</span><span class="case-meta">Sala 204, godz. 18:42</span></div>
       <p class="case-scene">${esc(m.params.scene)}</p>
       <blockquote class="case-quote" lang="en">„${esc(before)}${filled}${esc(after ?? '')}”</blockquote>
-      <span class="case-note">Zeznanie świadka — uzupełnij lukę</span>
+      <span class="case-note">Zeznanie świadka. Uzupełnij lukę.</span>
     </div>
     <div class="options" role="radiogroup" aria-label="Warianty odpowiedzi">${m.params.options.map((o, i) =>
       `<button class="option ${sel === i ? 'on' : ''}" role="radio" aria-checked="${sel === i}" data-choice="${i}"><kbd>${i + 1}</kbd><span lang="en">${esc(o)}</span></button>`).join('')}</div>
@@ -205,9 +205,9 @@ function renderGraph(m, s) {
   const cost = routeCost(graph, path) ?? 0;
   const footer = trace
     ? `<div class="trace-bar"><div class="trace-note" aria-live="polite"><span class="kicker">Krok ${trace.index} z ${trace.steps.length - 1}</span><p>${esc(step.note)}</p></div><div class="route-actions"><button class="btn btn-ghost btn-sm" data-act="trace-prev" ${trace.index === 0 ? 'disabled' : ''} aria-label="Poprzedni krok">${icon('prev', 16)}</button><button class="btn btn-ghost btn-sm" data-act="trace-next" ${trace.index === trace.steps.length - 1 ? 'disabled' : ''} aria-label="Następny krok">${icon('next', 16)}</button><button class="btn btn-ghost btn-sm" data-act="trace-close">${icon('close', 15)} Zamknij</button></div></div>`
-    : `<div class="route-bar"><div class="route-sum"><span class="kicker">Twoja trasa</span><strong class="mono">${path.join(' → ')}</strong></div><div class="route-sum"><span class="kicker">Koszt</span><strong class="mono">${cost}</strong></div><div class="route-actions"><button class="btn btn-ghost btn-sm" data-act="undo" ${path.length > 1 ? '' : 'disabled'}>${icon('undo', 15)} Cofnij</button>${s.result ? `<button class="btn btn-ghost btn-sm" data-act="trace">${icon('play', 14)} Pokaż Dijkstrę</button>` : ''}</div></div>`;
+    : `<div class="route-bar"><div class="route-sum"><span class="kicker">Twoja trasa</span><strong class="mono">${path.join(' → ')}</strong></div><div class="route-sum"><span class="kicker">Koszt</span><strong class="mono">${cost}</strong></div><div class="route-actions"><button class="btn btn-ghost btn-sm" data-act="undo" ${path.length > 1 ? '' : 'disabled'}>${icon('undo', 15)} Cofnij</button>${s.result ? `<button class="btn btn-ghost btn-sm" data-act="trace">${icon('play', 14)} Pokaż, jak liczy Dijkstra</button>` : ''}</div></div>`;
   return `<div class="stage stage-graph">
-    <div class="stage-bar"><span class="kicker">${trace ? 'Algorytm Dijkstry krok po kroku' : 'Graf ważony'}</span><span class="legend">${trace ? '<i class="lg done"></i>zamknięty <i class="lg cur"></i>bieżący' : `liczba na krawędzi = koszt · start <b>${m.params.start}</b> · cel <b>${m.params.end}</b>`}</span></div>
+    <div class="stage-bar"><span class="kicker">${trace ? 'Algorytm Dijkstry krok po kroku' : 'Graf ważony'}</span><span class="legend">${trace ? '<i class="lg done"></i>koszt ustalony <i class="lg cur"></i>sprawdzany teraz' : `liczba przy krawędzi to koszt, trasa z <b>${m.params.start}</b> do <b>${m.params.end}</b>`}</span></div>
     <div class="graph-wrap"><svg class="graph ${trace ? 'tracing' : ''}" viewBox="0 0 600 385" role="group" aria-label="Graf ważony. Wybieraj sąsiednie węzły, aby zbudować trasę.">${edges}${nodes}</svg></div>
     ${footer}
   </div>`;

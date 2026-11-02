@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../docs
 const port = Number(process.env.PORT || 4173);
 const ollama = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 const model = process.env.OLLAMA_MODEL || 'qwen3.5:9b';
-const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'application/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.svg':'image/svg+xml', '.ico':'image/x-icon' };
+const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'application/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.svg':'image/svg+xml', '.ico':'image/x-icon', '.woff2':'font/woff2' };
 const MAX_INPUT = 12_000;
 
 function json(res, code, object) {

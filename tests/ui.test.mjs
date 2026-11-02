@@ -25,21 +25,28 @@ test('routing rozpoznaje adresy', () => {
 
 test('strona startowa pokazuje 4 dziedziny i planer', () => {
   go('#/');
-  assert.match(root.innerHTML, /Ucz się, <em>eksperymentując/);
+  assert.match(root.innerHTML, /Temat:/);
   assert.match(root.innerHTML, /Czego chcesz się dziś nauczyć/);
   for (const name of ['Matematyka', 'Biologia', 'Angielski', 'Informatyka']) assert.ok(root.innerHTML.includes(name));
 });
 
 test('planer offline dobiera szablon i nie udaje nieobsługiwanych tematów', () => {
   click({ act: 'plan-try', topic: 'krążenie krwi' });
-  assert.match(root.innerHTML, /Biologia · Układ krążenia/);
+  assert.match(root.innerHTML, /Biologia: układ krążenia/);
   assert.match(root.innerHTML, /href="#\/m\/biology-1"/);
   click({ act: 'plan-try', topic: 'fotosynteza' });
   assert.match(root.innerHTML, /Tego tematu jeszcze nie ma/);
 });
 
+test('przełącznik wariantów zmienia stronę startową', () => {
+  go('#/');
+  click({ act: 'theme', value: 'linie' }); assert.match(root.innerHTML, /Twoja mapa nauki/); assert.match(root.innerHTML, /class="metro"/);
+  click({ act: 'theme', value: 'plansze' }); assert.match(root.innerHTML, /Plansze, które da się poruszyć/);
+  click({ act: 'theme', value: 'zeszyt' }); assert.match(root.innerHTML, /Temat:/);
+});
+
 test('laboratoria, filtr i ścieżka przedmiotu', () => {
-  go('#/labs'); assert.match(root.innerHTML, /<h1>Laboratoria<\/h1>/);
+  go('#/labs'); assert.match(root.innerHTML, /<h1>Przedmioty<\/h1>/);
   click({ act: 'filter', value: 'Języki' });
   assert.ok(root.innerHTML.includes('Angielski') && !root.innerHTML.includes('Algorytm Dijkstry'));
   click({ act: 'filter', value: 'all' });
@@ -54,7 +61,7 @@ test('misja matematyczna: suwaki, sprawdzenie i zapis próby', () => {
   click({ act: 'nudge', key: 'a', delta: '1' });
   click({ act: 'nudge', key: 'b', delta: '1' });
   click({ act: 'check' });
-  assert.match(root.innerHTML, /Dokładnie tak/);
+  assert.match(root.innerHTML, /Dobrze!/);
   assert.match(root.innerHTML, /Następna misja/);
 });
 
@@ -69,7 +76,7 @@ test('graf: budowa trasy, ocena i podgląd Dijkstry', () => {
   for (const n of ['C', 'B', 'D', 'E', 'F']) click({ node: n });
   assert.match(root.innerHTML, /A → C → B → D → E → F/);
   click({ act: 'check' });
-  assert.match(root.innerHTML, /Dokładnie tak/);
+  assert.match(root.innerHTML, /Dobrze!/);
   click({ act: 'trace' });
   assert.match(root.innerHTML, /Algorytm Dijkstry krok po kroku/);
   click({ act: 'trace-next' });
@@ -81,7 +88,7 @@ test('angielski: wybór odpowiedzi', () => {
   click({ choice: '1' });
   assert.match(root.innerHTML, /blank filled">had taken/);
   click({ act: 'check' });
-  assert.match(root.innerHTML, /Dokładnie tak/);
+  assert.match(root.innerHTML, /Dobrze!/);
 });
 
 test('postępy pokazują historię i nieznany adres daje 404', () => {
@@ -90,5 +97,5 @@ test('postępy pokazują historię i nieznany adres daje 404', () => {
   assert.match(root.innerHTML, /Ostatnie próby/);
   assert.match(root.innerHTML, /Kurier w mieście/);
   go('#/m/nie-ma');
-  assert.match(root.innerHTML, /Nie ma takiego miejsca/);
+  assert.match(root.innerHTML, /Nie ma takiej strony/);
 });

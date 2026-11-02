@@ -1,0 +1,145 @@
+/* Fonty (licencja SIL OFL 1.1) z pakietów @fontsource, dołączone lokalnie do pracy offline. */
+/* caveat-latin-600-normal */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(./caveat-latin-600-normal.woff2) format('woff2');
+}
+/* caveat-latin-ext-600-normal */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(./caveat-latin-ext-600-normal.woff2) format('woff2');
+}
+/* jost-latin-400-normal */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./jost-latin-400-normal.woff2) format('woff2');
+}
+/* jost-latin-ext-400-normal */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./jost-latin-ext-400-normal.woff2) format('woff2');
+}
+/* jost-latin-500-normal */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./jost-latin-500-normal.woff2) format('woff2');
+}
+/* jost-latin-ext-500-normal */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./jost-latin-ext-500-normal.woff2) format('woff2');
+}
+/* jost-latin-700-normal */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./jost-latin-700-normal.woff2) format('woff2');
+}
+/* jost-latin-ext-700-normal */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./jost-latin-ext-700-normal.woff2) format('woff2');
+}
+/* overpass-latin-400-normal */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./overpass-latin-400-normal.woff2) format('woff2');
+}
+/* overpass-latin-ext-400-normal */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./overpass-latin-ext-400-normal.woff2) format('woff2');
+}
+/* overpass-latin-600-normal */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(./overpass-latin-600-normal.woff2) format('woff2');
+}
+/* overpass-latin-ext-600-normal */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(./overpass-latin-ext-600-normal.woff2) format('woff2');
+}
+/* overpass-latin-800-normal */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url(./overpass-latin-800-normal.woff2) format('woff2');
+}
+/* overpass-latin-ext-800-normal */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url(./overpass-latin-ext-800-normal.woff2) format('woff2');
+}
+/* lexend-latin-400-normal */
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./lexend-latin-400-normal.woff2) format('woff2');
+}
+/* lexend-latin-ext-400-normal */
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./lexend-latin-ext-400-normal.woff2) format('woff2');
+}
+/* lexend-latin-700-normal */
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./lexend-latin-700-normal.woff2) format('woff2');
+}
+/* lexend-latin-ext-700-normal */
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./lexend-latin-ext-700-normal.woff2) format('woff2');
+}

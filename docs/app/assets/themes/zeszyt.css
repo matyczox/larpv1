@@ -1,0 +1,159 @@
+/* A · ZESZYT — kartka w kratkę, czerwony margines, atrament, długopis nauczyciela. */
+:root {
+  color-scheme: light;
+  --paper: #fdfdfb;
+  --grid: #d6e4f1;
+  --ink-blue: #1f3a93;
+  --red-pen: #d63a2f;
+  --green-pen: #1d8a4a;
+  --pencil: #6b7280;
+
+  --bg: var(--paper); --bg-2: #eef3f9; --surface: #ffffff; --surface-2: #f6f9fc;
+  --ink: #1b2438; --ink-2: #33405a; --muted: var(--pencil); --line: #d9e2ec; --line-2: #b8c8da;
+  --accent: var(--ink-blue); --on-accent: #ffffff; --gold: var(--red-pen);
+  --ok: var(--green-pen); --ok-bg: transparent; --no: var(--red-pen); --no-bg: transparent;
+  --oxy: #d63a2f; --deoxy: #2b5fd9;
+  --math: #2457c9; --biology: #c4314b; --english: #7b3fc4; --algorithms: #11806a;
+
+  --sans: "Lexend", system-ui, sans-serif;
+  --serif: "Lexend", system-ui, sans-serif;
+  --note: "Caveat", "Segoe Print", "Comic Sans MS", cursive;
+  --r: 4px; --r-sm: 4px;
+  --shadow: 0 1px 0 rgba(31, 58, 147, .06);
+  --cell: 24px;
+}
+
+/* Kartka: kratka 24 px i czerwony margines */
+body {
+  font-size: 17px; line-height: var(--cell);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(214, 58, 47, .7), rgba(214, 58, 47, .7)),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 2px 100%, var(--cell) var(--cell), var(--cell) var(--cell);
+  background-repeat: repeat-y, repeat, repeat;
+  background-position: max(10px, calc(50% - 606px)) 0, 0 0, 0 0;
+}
+
+
+h1, h2, h3 { color: var(--ink-blue); font-weight: 700; letter-spacing: -.01em; }
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.1; }
+h2 { font-size: 1.5rem; line-height: var(--cell); padding-bottom: 6px; }
+.lead { line-height: 1.6; }
+
+.topbar { background: rgba(253, 253, 251, .94); border-bottom: 1.5px solid var(--line-2); }
+.bm-bg { fill: var(--ink-blue); } .bm-dot { fill: var(--red-pen); }
+.brand-name { color: var(--ink-blue); font-weight: 700; }
+.nav a { border-radius: 4px; }
+.nav a[aria-current="page"] { background: none; box-shadow: none; color: var(--ink-blue); text-decoration: underline 2px var(--red-pen); text-underline-offset: 7px; }
+.ai-chip { border-radius: 4px; border-style: solid; font-family: var(--sans); }
+.ai-chip.on { background: none; }
+
+/* Przyciski: atrament */
+.btn { border-radius: 4px; font-weight: 700; }
+.btn-primary { background: var(--ink-blue); }
+.btn-primary:hover:not(:disabled) { box-shadow: 0 3px 0 #13265f; transform: translateY(-1px); }
+.btn-ghost { border: 1.5px solid var(--ink-blue); color: var(--ink-blue); background: var(--paper); }
+.chip { border-radius: 4px; background: var(--paper); }
+.chip.on { background: var(--ink-blue); border-color: var(--ink-blue); }
+
+/* Strona startowa: notatka z lekcji */
+.hero-zeszyt { display: block; padding: 24px 0 24px; }
+.z-head { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 0 16px; padding-bottom: 12px; border-bottom: 3px double var(--ink-blue); }
+.z-topic { font-weight: 700; font-size: 1.25rem; color: var(--red-pen); }
+.z-head h1 { font-size: clamp(2rem, 5vw, 3.4rem); }
+.z-date { font: 600 1.6rem/1 var(--note); color: var(--ink-blue); }
+.z-body { display: grid; justify-items: start; gap: 12px; max-width: 62ch; padding: 24px 0; }
+.z-task { font-size: 1.15rem; line-height: 1.7; color: var(--ink); }
+.z-task b { color: var(--c); }
+.z-note { font: 600 1.55rem/1.1 var(--note); color: var(--pencil); transform: rotate(-1deg); }
+.z-body .btn { margin-top: 12px; min-height: 48px; padding: 0 28px; font-size: 1.05rem; }
+.z-lead { color: var(--ink-2); max-width: 62ch; }
+
+.section { margin-top: 48px; }
+.subject-grid { gap: 0 24px; }
+.subject-card { background: none; border: 0; border-top: 4px solid var(--c); border-radius: 0; padding: 18px 0 0; min-height: 0; }
+.subject-card:hover { transform: none; box-shadow: none; }
+.subject-card:hover .sc-name { text-decoration: underline 2px var(--c); text-underline-offset: 5px; }
+.sc-name { color: var(--ink-blue); font-size: 1.35rem; }
+.sc-ico { background: none; width: auto; height: auto; }
+.sc-desc { color: var(--ink-2); }
+.sc-dots i { height: 6px; border-radius: 0; background: var(--line-2); }
+
+.planner { background: var(--surface); border: 1.5px solid var(--line-2); border-radius: 4px; box-shadow: none; }
+.planner-label { color: var(--ink-blue); font-weight: 700; }
+.plan-row input { border-radius: 4px; background: var(--paper); border: 1.5px solid var(--line-2); }
+.plan-row input:focus { border-color: var(--ink-blue); }
+.plan-result { background: none; border: 0; border-left: 3px solid var(--c, var(--pencil)); border-radius: 0; }
+
+/* Arkusze ćwiczeń wklejone do zeszytu */
+.stage, .lab-row, .trail-card, .stats.big, .subject-head { border-radius: 4px; border: 1.5px solid var(--line-2); box-shadow: 2px 3px 0 rgba(31, 58, 147, .08); }
+.stage-bar { background: var(--surface); }
+.lab-row-head { border-left-width: 4px; }
+.mission-head .m-pos { color: var(--red-pen); font-weight: 700; }
+.mission-head h1 { color: var(--ink-blue); }
+.task { color: var(--ink); line-height: 1.6; }
+.stepper a { border-radius: 4px; }
+.stepper a.cur { background: var(--ink-blue); border-color: var(--ink-blue); }
+
+/* Panele boczne: notatki na marginesie, bez kart */
+.mission-side { gap: 0; }
+.panel { background: none; border: 0; border-radius: 0; border-top: 1.5px solid var(--line-2); padding: 16px 0; }
+.mission-side .panel:first-child { border-top: 0; padding-top: 0; }
+.hint { font: 600 1.45rem/1.15 var(--note); color: var(--ink-blue); background: none; border: 0; padding: 4px 0; }
+.tutor textarea { border-radius: 4px; background: var(--paper); }
+.tutor-answer { font: 600 1.35rem/1.2 var(--note); color: var(--ink-blue); background: none; padding: 0; }
+
+/* Długopis nauczyciela: tylko tu pojawia się pismo odręczne */
+.feedback { border: 0; padding: 12px 0; background: none !important; }
+.fb-ico { width: 46px; height: 46px; background: none !important; border: 2.5px solid currentColor; border-radius: 50%; transform: rotate(-6deg); }
+.feedback.ok .fb-ico, .feedback.ok .fb-mark { color: var(--green-pen); }
+.feedback.no .fb-ico, .feedback.no .fb-mark, .feedback.no p { color: var(--red-pen); }
+.fb-mark { font: 700 2.1rem/1 var(--note) !important; transform: rotate(-2deg); display: inline-block; margin-bottom: 6px !important; }
+.feedback.no p { font: 600 1.45rem/1.2 var(--note); }
+.feedback.ok p { color: var(--ink); }
+.feedback small { color: var(--pencil); }
+.enter { animation: pen .45s ease both; }
+@keyframes pen { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+
+/* Ćwiczenia */
+.p-line { stroke: var(--ink-blue); stroke-width: 3; }
+.p-b { stroke: var(--ink-blue); }
+.p-tri, .p-tri-label { stroke: var(--red-pen); } .p-tri-label { fill: var(--red-pen); stroke: none; font-family: var(--note); font-size: 20px; }
+.p-pt-label { font-family: var(--sans); }
+.eq b, .slider-head output { color: var(--ink-blue); }
+.pt-checks li { border-radius: 4px; background: none; border: 1.5px solid var(--line-2); }
+.pt-checks li.hit { border-color: var(--green-pen); color: var(--green-pen); background: none; }
+.case { background-color: #fffdf3; color: var(--ink); border-radius: 2px; }
+.case-stamp { color: var(--red-pen); }
+.blank.filled { color: var(--ink-blue); border-color: var(--ink-blue); }
+.option { border-radius: 4px; }
+.option.on { border-color: var(--ink-blue); background: #eef2fb; }
+.option.on kbd { background: var(--ink-blue); }
+.g-node.on circle, .g-node.done circle, .bio-node.on circle { fill: var(--ink-blue); stroke: var(--ink-blue); }
+.g-edge.on line, .g-edge.tree line { stroke: var(--ink-blue); }
+.g-edge.on rect, .g-edge.tree rect { stroke: var(--ink-blue); }
+.g-edge.on text, .g-edge.tree text { fill: var(--ink-blue); }
+.g-node.start circle { stroke: var(--ink-blue); }
+.g-node.end circle, .g-node.last circle, .g-node.current circle { stroke: var(--red-pen); }
+.g-node.current circle { fill: #fbe3e0; }
+.g-dist rect { fill: var(--red-pen); } .g-dist text { fill: #fff; }
+.crumbs li { border-radius: 4px; }
+.crumbs li span { background: var(--ink-blue); }
+
+.stats { border-color: var(--line-2); }
+.history-list li, .subject-bars a { border-color: var(--line-2); }
+.theme-switch { background: var(--surface); border: 1.5px solid var(--line-2); border-radius: 6px; }
+.theme-switch button { border-radius: 4px; }
+.theme-switch button[aria-pressed="true"] { background: var(--ink-blue); color: #fff; }
+.tabbar { background: rgba(253, 253, 251, .97); }
+.tabbar a[aria-current="page"] { color: var(--ink-blue); background: #eef2fb; }
+
+@media (max-width: 680px) {
+  body { background-position: 12px 0, 0 0, 0 0; }
+  .wrap { width: calc(100% - 50px); margin-left: 30px; margin-right: 20px; }
+  .z-head { grid-template-columns: 1fr; }
+  .z-date { order: -1; font-size: 1.3rem; }
+  .subject-grid { gap: 28px; }
+}
