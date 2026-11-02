@@ -36,7 +36,7 @@ Aby wybrać inny model, ustaw zmienną środowiskową `OLLAMA_MODEL` (np. PowerS
 - Matematyka: regulowany wykres funkcji liniowej, trzy zadania, dokładna weryfikacja współczynników.
 - Biologia: interaktywna mapa dwóch obiegów krwi; sprawdzanie kolejności struktur.
 - Angielski: trzy oryginalne sceny śledztwa do ćwiczenia Past Perfect / Continuous.
-- Informatyka: trzy grafy ważone, samodzielne układanie trasy, sprawdzanie przez algorytm Dijkstry.
+- Informatyka: trzy grafy ważone, samodzielne układanie trasy, sprawdzanie przez algorytm Dijkstry i podgląd jego działania krok po kroku.
 - Pulpit, katalog, ścieżki tematyczne, adaptacyjne proponowanie powtórek po błędnych próbach, statystyki oraz trwała historia w `localStorage`.
 - Dobór szablonu nauki na podstawie wpisanego tematu: przez lokalne AI lub jawne reguły offline. Nieobsługiwane tematy nie są pozorowane jako działające.
 - Opcjonalny lokalny tutor (Qwen/Ollama) przez bezpieczny serwer HTTP w Node.js; bez umieszczania kluczy w frontendzie.
@@ -53,13 +53,16 @@ Nie przedstawiaj prototypu jako ukończonego „World Compilera” ani jako apli
 ## Struktura
 
 ```text
-docs/app/index.html       Frontend bez zewnętrznych zależności
-docs/app/assets/style.css  Interfejs responsywny
-docs/app/src/data.js      Autorskie zadania i grafy
-docs/app/src/engine.js    Sprawdzanie, Dijkstra, postęp
-docs/app/src/app.js       Widoki i interakcje
-server/server.mjs         HTTP i integracja Ollama
-tests/engine.test.mjs     Testy logiki
+docs/app/index.html          Punkt wejścia, bez zewnętrznych zależności
+docs/app/assets/style.css    Interfejs: jasny/ciemny motyw, wersja mobilna
+docs/app/src/data.js         Autorskie zadania i grafy
+docs/app/src/engine.js       Sprawdzanie, Dijkstra, postęp
+docs/app/src/app.js          Stan, routing (#/…), zdarzenia
+docs/app/src/views.js        Widoki: start, laboratoria, misja, postępy
+docs/app/src/activities.js   Ćwiczenia: wykres, krążenie, śledztwo, graf + podgląd Dijkstry
+docs/app/src/ui.js           Ikony i drobne komponenty
+server/server.mjs            HTTP i integracja Ollama
+tests/*.test.mjs             Testy logiki, serwera, AI i interfejsu
 ```
 
 ## Weryfikacja

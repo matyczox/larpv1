@@ -8,6 +8,6 @@
     "start": "node server/server.mjs",
     "dev": "node --watch server/server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check docs/app/src/app.js && node --check docs/app/src/engine.js && node --check server/server.mjs && npm test"
+    "check": "for f in docs/app/src/*.js server/server.mjs; do node --check $f || exit 1; done && npm test"
   }
 }

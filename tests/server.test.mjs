@@ -25,8 +25,8 @@ test('serwer dostarcza interfejs, dane i API bez opłat',async()=>{
   try {
     await waitForServer(url);
     const page=await fetch(url);assert.equal(page.status,200);assert.match(await page.text(),/PARADOX/);
-    const js=await fetch(url+'/src/app.js');assert.equal(js.status,200);assert.match(await js.text(),/function renderHome/);
-    const css=await fetch(url+'/assets/style.css');assert.equal(css.status,200);assert.match(await css.text(),/\.hero/);
+    const js=await fetch(url+'/src/app.js');assert.equal(js.status,200);assert.match(await js.text(),/function onRoute/);
+    const css=await fetch(url+'/assets/style.css');assert.equal(css.status,200);assert.match(await css.text(),/\.mission-side/);
     const health=await fetch(url+'/api/health');assert.equal(health.status,200);assert.equal((await health.json()).aiAvailable,false);
     const missing=await fetch(url+'/not-real');assert.equal(missing.status,404);
     const invalid=await fetch(url+'/api/tutor',{method:'POST',headers:{'content-type':'application/json'},body:'{bad json'});
