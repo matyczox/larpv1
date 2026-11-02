@@ -23,9 +23,10 @@ test('routing rozpoznaje adresy', () => {
   assert.equal(parseRoute('#/xyz').name, 'missing');
 });
 
-test('strona startowa pokazuje 4 dziedziny i planer', () => {
+test('strona startowa pokazuje mapę 4 linii i planer', () => {
   go('#/');
-  assert.match(root.innerHTML, /Temat:/);
+  assert.match(root.innerHTML, /Twoja mapa nauki/);
+  assert.match(root.innerHTML, /class="metro"/);
   assert.match(root.innerHTML, /Czego chcesz się dziś nauczyć/);
   for (const name of ['Matematyka', 'Biologia', 'Angielski', 'Informatyka']) assert.ok(root.innerHTML.includes(name));
 });
@@ -36,13 +37,6 @@ test('planer offline dobiera szablon i nie udaje nieobsługiwanych tematów', ()
   assert.match(root.innerHTML, /href="#\/m\/biology-1"/);
   click({ act: 'plan-try', topic: 'fotosynteza' });
   assert.match(root.innerHTML, /Tego tematu jeszcze nie ma/);
-});
-
-test('przełącznik wariantów zmienia stronę startową', () => {
-  go('#/');
-  click({ act: 'theme', value: 'linie' }); assert.match(root.innerHTML, /Twoja mapa nauki/); assert.match(root.innerHTML, /class="metro"/);
-  click({ act: 'theme', value: 'plansze' }); assert.match(root.innerHTML, /Plansze, które da się poruszyć/);
-  click({ act: 'theme', value: 'zeszyt' }); assert.match(root.innerHTML, /Temat:/);
 });
 
 test('laboratoria, filtr i ścieżka przedmiotu', () => {

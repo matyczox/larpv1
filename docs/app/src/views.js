@@ -2,7 +2,7 @@
 import { SUBJECTS, MISSIONS, getMission, getSubject, subjectMissions } from './data.js';
 import { summarize, recommend } from './engine.js';
 import { renderActivity } from './activities.js';
-import { subjectArt, metroMap } from './art.js';
+import { metroMap } from './art.js';
 import { esc, icon, ring, subjectStyle } from './ui.js';
 
 const tries = n => `${n} ${n === 1 ? 'próba' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'próby' : 'prób'}`;
@@ -10,26 +10,19 @@ const solved = (progress, id) => progress.attempts.some(a => a.missionId === id 
 const solvedIn = (progress, subjectId) => subjectMissions(subjectId).filter(m => solved(progress, m.id)).length;
 const position = m => subjectMissions(m.subject).findIndex(x => x.id === m.id) + 1;
 
-export const THEMES = [
-  { id: 'zeszyt', name: 'Zeszyt' },
-  { id: 'plansze', name: 'Plansze' },
-  { id: 'linie', name: 'Linie' },
-];
-
 /* ---------- Szkielet ---------- */
 
 export function layout(ctx, page) {
-  const { state, theme } = ctx;
+  const { state } = ctx;
   const name = state.route.name;
   const active = n => (n === name || (n === 'labs' && ['subject', 'mission'].includes(name))) ? 'aria-current="page"' : '';
   const ai = state.ai.online
     ? `<span class="ai-chip on" title="Tutor korzysta z lokalnego modelu">${icon('sparkle', 14)} Tutor AI włączony</span>`
     : `<span class="ai-chip" title="Ćwiczenia i sprawdzanie działają bez AI">Bez tutora AI</span>`;
   const nav = `<a href="#/" ${active('home')}>${icon('home')}<span>Start</span></a><a href="#/labs" ${active('labs')}>${icon('labs')}<span>Przedmioty</span></a><a href="#/progress" ${active('progress')}>${icon('progress')}<span>Postępy</span></a>`;
-  const switcher = `<div class="theme-switch" role="group" aria-label="Wariant wyglądu">${THEMES.map((t, i) => `<button data-act="theme" data-value="${t.id}" aria-pressed="${t.id === theme}">${'ABC'[i]}. ${t.name}</button>`).join('')}</div>`;
   return `<header class="topbar"><div class="wrap topbar-in"><a class="brand" href="#/" aria-label="PARADOX, strona startowa"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><rect width="32" height="32" rx="9" class="bm-bg"/><path d="M10 24V8h7a5 5 0 0 1 0 10h-7" class="bm-p"/><circle cx="23" cy="23" r="3" class="bm-dot"/></svg></span><span class="brand-name">paradox</span></a><nav class="nav" aria-label="Główna nawigacja">${nav}</nav>${ai}</div></header>
   <main class="wrap main" id="main" tabindex="-1">${page}</main>
-  <footer class="wrap footer"><span>PARADOX, laboratorium nauki przez działanie. Zadania są autorskie, postępy zapisują się tylko w tej przeglądarce.</span>${switcher}</footer>
+  <footer class="wrap footer"><span>PARADOX, laboratorium nauki przez działanie. Zadania są autorskie, postępy zapisują się tylko w tej przeglądarce.</span></footer>
   <nav class="tabbar" aria-label="Nawigacja mobilna">${nav}</nav>
   ${state.toast ? `<div class="toast" role="status">${esc(state.toast)}</div>` : ''}`;
 }
@@ -54,40 +47,6 @@ function planner(ctx) {
   </form>`;
 }
 
-function subjectCard(ctx, s) {
-  const { progress } = ctx;
-  const missions = subjectMissions(s.id);
-  const done = solvedIn(progress, s.id);
-  return `<a class="subject-card" href="#/labs/${s.id}" ${subjectStyle(s)}>
-    <span class="sc-art">${subjectArt(s.id)}</span>
-    <span class="sc-top"><span class="sc-ico">${icon(s.id, 22)}</span><span class="sc-ring">${ring(done / missions.length, 40, 3.5)}<b>${done}/${missions.length}</b></span></span>
-    <strong class="sc-name">${esc(s.name)}</strong>
-    <span class="sc-sub">${esc(s.subtitle)}</span>
-    <span class="sc-desc">${esc(s.summary)}</span>
-    <span class="sc-dots" aria-label="Ukończone misje: ${done} z ${missions.length}">${missions.map(m => `<i class="${solved(progress, m.id) ? 'on' : ''}"></i>`).join('')}</span>
-  </a>`;
-}
-
-function heroZeszyt(ctx, next, ns) {
-  const today = new Date().toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
-  return `<section class="hero hero-zeszyt">
-    <div class="z-head"><span class="z-topic">Temat:</span><h1>${esc(next.mission.title)}</h1><span class="z-date">${esc(today)}</span></div>
-    <div class="z-body" ${subjectStyle(ns)}>
-      <p class="z-task"><b>${esc(ns.name)}, zadanie ${position(next.mission)}.</b> ${esc(next.mission.prompt)}</p>
-      <p class="z-note">${esc(next.reason)}</p>
-      <a class="btn btn-primary" href="#/m/${next.mission.id}">Rozwiąż zadanie</a>
-    </div>
-    <p class="z-lead">Ćwiczenia, które sprawdza algorytm, a nie zgadywanie. Popełnij błąd, zobacz, gdzie dokładnie, i popraw.</p>
-  </section>`;
-}
-
-function heroPlansze(ctx) {
-  return `<section class="hero hero-plansze">
-    <h1>Plansze, które da się poruszyć</h1>
-    <p class="lead">Przesuwasz wykres, prowadzisz krew przez serce, układasz zeznanie świadka i szukasz najtańszej trasy w grafie. Każdą odpowiedź sprawdza algorytm.</p>
-  </section>`;
-}
-
 function heroLinie(ctx, next) {
   const { progress } = ctx;
   const done = summarize(progress).done;
@@ -100,12 +59,8 @@ function heroLinie(ctx, next) {
 }
 
 export function homeView(ctx) {
-  const { progress, theme } = ctx;
-  const next = recommend(progress);
-  const ns = getSubject(next.mission.subject);
-  const hero = theme === 'plansze' ? heroPlansze(ctx) : theme === 'linie' ? heroLinie(ctx, next) : heroZeszyt(ctx, next, ns);
-  return `${hero}
-  ${theme === 'linie' ? '' : `<section class="section subjects"><h2>${theme === 'plansze' ? 'Wybierz planszę' : 'Przedmioty'}</h2><div class="subject-grid">${SUBJECTS.map(s => subjectCard(ctx, s)).join('')}</div></section>`}
+  const next = recommend(ctx.progress);
+  return `${heroLinie(ctx, next)}
   <section class="section">${planner(ctx)}</section>`;
 }
 
@@ -138,7 +93,7 @@ export function subjectView(ctx, subjectId) {
   const next = recommend(progress, s.id).mission;
   return `<a class="crumb" href="#/labs">${icon('back', 15)} Przedmioty</a>
   <header class="subject-head" ${subjectStyle(s)}>
-    <span class="sh-art">${subjectArt(s.id)}</span>
+    <span class="l-badge big" aria-hidden="true">${s.name[0]}</span>
     <div class="sh-text"><h1>${esc(s.name)}</h1><p class="sh-sub">${esc(s.subtitle)}</p><p class="lead">${esc(s.summary)}</p></div>
     <div class="sh-side"><span class="sc-ring big">${ring(done / missions.length, 72, 5)}<b>${done}/${missions.length}</b></span><a class="btn btn-primary" href="#/m/${next.id}">${done === missions.length ? 'Powtórz' : done ? 'Kontynuuj' : 'Zacznij'}</a></div>
   </header>

@@ -1,16 +1,6 @@
-/** Ilustracje: rysunki przedmiotów (plansze) i mapa linii nauki (metro). */
+/** Mapa linii nauki w stylu metra: przedmioty to linie, misje to stacje. */
 import { SUBJECTS, subjectMissions } from './data.js';
 import { esc } from './ui.js';
-
-/** Proste rysunki liniowe w kolorze currentColor, viewBox 200×140. */
-const ART = {
-  math: `<path d="M20 120H186M30 132V10" class="a-thin"/><path d="M14 118 L180 20" class="a-bold"/><circle cx="64" cy="92" r="6" class="a-dot"/><circle cx="130" cy="53" r="6" class="a-dot"/><path d="M64 92H130V53" class="a-dash"/><text x="94" y="108" class="a-txt">1</text><text x="138" y="78" class="a-txt">a</text>`,
-  biology: `<path d="M100 70C70 30 30 22 22 48S60 96 100 70Z" class="a-bold"/><path d="M100 70C130 110 172 118 178 92S140 44 100 70Z" class="a-bold"/><circle cx="100" cy="70" r="12" class="a-dot"/><text x="20" y="30" class="a-txt">płuca</text><text x="132" y="134" class="a-txt">ciało</text>`,
-  english: `<path d="M14 84H188" class="a-thin"/><path d="M178 76 188 84 178 92" class="a-thin"/><circle cx="62" cy="84" r="7" class="a-dot"/><circle cx="138" cy="84" r="7" class="a-dot"/><path d="M62 72C76 38 124 38 138 72" class="a-dash"/><text x="30" y="116" class="a-txt">had taken</text><text x="112" y="116" class="a-txt">arrived</text>`,
-  algorithms: `<path d="M30 70 80 26 150 34 176 92 100 112Z M80 26 100 112 M30 70 100 112" class="a-thin"/><path d="M30 70 80 26 150 34 176 92" class="a-bold"/><circle cx="30" cy="70" r="9" class="a-dot"/><circle cx="80" cy="26" r="7" class="a-node"/><circle cx="150" cy="34" r="7" class="a-node"/><circle cx="176" cy="92" r="9" class="a-dot"/><circle cx="100" cy="112" r="7" class="a-node"/>`,
-};
-
-export const subjectArt = id => `<svg class="art" viewBox="0 0 200 140" aria-hidden="true" fill="none">${ART[id] || ''}</svg>`;
 
 /* ---------- Mapa metra ---------- */
 

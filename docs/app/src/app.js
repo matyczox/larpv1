@@ -2,24 +2,8 @@
 import { BIO_NODES, GRAPHS, getMission, getSubject } from './data.js';
 import { grade, routeCost, readProgress, saveProgress, matchTopic } from './engine.js';
 import { defaultAnswer, isAnswerEmpty, linearPlot, equation, pointChecks, dijkstraTrace } from './activities.js';
-import { layout, homeView, labsView, subjectView, missionView, progressView, notFound, THEMES } from './views.js';
+import { layout, homeView, labsView, subjectView, missionView, progressView, notFound } from './views.js';
 
-/* ---------- Motyw ---------- */
-const THEME_KEY = 'paradox.theme';
-function initialTheme() {
-  let t = null;
-  try { t = new URLSearchParams(globalThis.location?.search || '').get('theme') || localStorage.getItem(THEME_KEY); } catch { /* brak dostępu do pamięci */ }
-  return THEMES.some(x => x.id === t) ? t : THEMES[0].id;
-}
-let theme = initialTheme();
-function applyTheme(t) {
-  theme = t;
-  try { localStorage.setItem(THEME_KEY, t); } catch { /* tryb prywatny */ }
-  const html = globalThis.document?.documentElement;
-  if (html) html.dataset.theme = t;
-  const link = globalThis.document?.getElementById?.('theme-css');
-  if (link) link.href = `./assets/themes/${t}.css`;
-}
 
 const root = document.querySelector('#app');
 const progress = readProgress();
@@ -65,7 +49,7 @@ function onRoute() {
 /* ---------- Render ---------- */
 
 function page() {
-  const ctx = { state, progress, theme };
+  const ctx = { state, progress };
   const r = state.route;
   if (r.name === 'home') return homeView(ctx);
   if (r.name === 'labs') return labsView(ctx);
@@ -76,7 +60,7 @@ function page() {
 }
 
 function render() {
-  root.innerHTML = layout({ state, progress, theme }, page());
+  root.innerHTML = layout({ state, progress }, page());
   // Animacja „wejścia” tylko przy pierwszym pokazaniu elementu.
   if (state.session) state.session.fresh = false;
   state.plan.fresh = false;
@@ -211,8 +195,7 @@ function onClick(event) {
   if (el.dataset.node) { selectNode(el.dataset.node); return; }
   if (el.dataset.choice !== undefined && s) { s.answer.selected = Number(el.dataset.choice); invalidate(); render(); return; }
   const act = el.dataset.act;
-  if (act === 'theme') { applyTheme(el.dataset.value); render(); }
-  else if (act === 'filter') { state.filter = el.dataset.value; render(); }
+  if (act === 'filter') { state.filter = el.dataset.value; render(); }
   else if (act === 'plan-try') { plan(el.dataset.topic); }
   else if (act === 'check') check();
   else if (act === 'restart' && s) { state.session = newSession(s.id); render(); }
@@ -262,6 +245,5 @@ root.addEventListener('input', onInput);
 window.addEventListener?.('keydown', onKey);
 window.addEventListener?.('hashchange', onRoute);
 
-applyTheme(theme);
 onRoute();
 probeAI();

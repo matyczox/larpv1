@@ -1,38 +1,23 @@
-/* PARADOX — arkusz stylów. Bez zewnętrznych zależności; działa offline. */
+/* PARADOX — arkusz stylów. Styl „Linie”: mapa metra, przedmioty to linie, misje to stacje. Działa offline. */
 
 :root {
   color-scheme: light;
-  --bg: #f5f2ea;
-  --bg-2: #ede8dc;
-  --surface: #fffdf7;
-  --surface-2: #f8f5ec;
-  --ink: #1c1a14;
-  --ink-2: #3d3a31;
-  --muted: #6e695c;
-  --line: #e2dccd;
-  --line-2: #d2cab7;
-  --accent: #1c1a14;
-  --on-accent: #fffdf7;
-  --gold: #c98a12;
-  --ok: #1f8a5b;
-  --ok-bg: #e6f4ec;
-  --no: #c2412d;
-  --no-bg: #fbeae5;
-  --oxy: #d0372f;
-  --deoxy: #3b62c9;
+  --line-blue: #0067b1;
+  --line-red: #d52b1e;
+  --line-orange: #ef8200;
+  --line-green: #009a49;
 
-  --math: #3563e9;
-  --biology: #d0374f;
-  --english: #7c4ddb;
-  --algorithms: #0d8a6a;
+  --bg: #ffffff; --bg-2: #f1f3f4; --surface: #ffffff; --surface-2: #f6f7f8;
+  --ink: #000000; --ink-2: #30353a; --muted: #656c73; --line: #e2e5e8; --line-2: #c6cbd0;
+  --accent: #000000; --on-accent: #ffffff; --gold: #ffc72c;
+  --ok: #00813d; --ok-bg: #e6f5ec; --no: #c4231a; --no-bg: #fcebea;
+  --oxy: #d52b1e; --deoxy: #0067b1;
+  --math: var(--line-blue); --biology: var(--line-red); --english: var(--line-orange); --algorithms: var(--line-green);
 
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-
-  --r: 14px;
-  --r-sm: 9px;
-  --shadow: 0 1px 0 rgba(28, 26, 20, .04), 0 10px 30px -18px rgba(28, 26, 20, .28);
+  --sans: "Overpass", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --serif: "Overpass", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --r: 10px; --r-sm: 8px;
+  --shadow: none;
 }
 
 /* ---------- Podstawy ---------- */
@@ -129,11 +114,8 @@ code { background: var(--bg-2); padding: .1em .4em; border-radius: 5px; }
 }
 .ai-chip.on { color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent); background: var(--ok-bg); }
 .tabbar { display: none; }
-.theme-switch { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--bg-2); }
-.theme-switch button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; font-size: .82rem; font-weight: 600; color: var(--muted); }
-.theme-switch button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .lab-row-missions { list-style: none; margin: 0; padding: 0; }
-.metro-wrap, .l-strips { display: none; }
+.l-strips { display: none; }
 
 .footer {
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px;
@@ -213,8 +195,6 @@ code { background: var(--bg-2); padding: .1em .4em; border-radius: 5px; }
 .sc-ring.big b { font-size: 1rem; }
 .ring-track { fill: none; stroke: var(--line); }
 .ring-value { fill: none; stroke: var(--c, var(--ink)); stroke-linecap: round; transition: stroke-dasharray .4s ease; }
-.sc-art, .sh-art { display: none; }
-.sh-art .art { width: 100%; height: auto; }
 .sc-name { font: 600 1.4rem/1.15 var(--serif); }
 .sc-sub { font-size: .9rem; font-weight: 600; color: var(--ink-2); }
 .sc-desc { font-size: .88rem; color: var(--muted); flex: 1; }
@@ -546,4 +526,141 @@ code { background: var(--bg-2); padding: .1em .4em; border-radius: 5px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Styl „Linie” ---------- */
+h1, h2, h3 { font-weight: 800; letter-spacing: -.02em; }
+h1 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); }
+
+.topbar { background: #000; border: 0; }
+.topbar .brand-name, .topbar .nav a { color: #fff; }
+.bm-bg { fill: #fff; } .bm-p { stroke: #000; } .bm-dot { fill: var(--line-orange); }
+.brand-name { font-weight: 800; }
+.nav a { color: rgba(255,255,255,.7) !important; }
+.nav a:hover { background: rgba(255,255,255,.12); }
+.nav a[aria-current="page"] { background: #fff; color: #000 !important; box-shadow: none; }
+.ai-chip { color: rgba(255,255,255,.75); border-color: rgba(255,255,255,.35); border-style: solid; }
+.ai-chip.on { background: var(--line-green); color: #fff; border-color: var(--line-green); }
+
+.btn { font-weight: 700; }
+.btn-primary { background: #000; }
+.btn-ghost { border: 2px solid #000; }
+.chip { border: 2px solid var(--line-2); font-weight: 600; }
+.chip.on { background: #000; border-color: #000; }
+
+/* Start: mapa sieci */
+.hero-linie { display: block; padding: 8px 0 0; }
+.l-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 40px; }
+.l-head .lead { max-width: 46ch; }
+.metro-wrap { display: block; margin: 18px -20px 0; }
+.metro { width: 100%; height: auto; display: block; }
+.m-line { fill: none; stroke: var(--c); stroke-width: 13; stroke-linejoin: round; stroke-linecap: round; }
+.m-badge circle { fill: var(--c); }
+.m-badge text { fill: #fff; font: 800 17px var(--sans); }
+.m-line-name { font: 700 14px var(--sans); fill: var(--muted); }
+.m-hub rect { fill: #000; }
+.m-hub text { fill: #fff; font: 800 16px var(--sans); }
+.m-station { cursor: pointer; outline: none; }
+.m-station circle { fill: #fff; stroke: #000; stroke-width: 4.5; transition: r .12s; }
+.m-station text { font: 700 15px var(--sans); fill: #000; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+.m-station:hover circle, .m-station:focus-visible circle { r: 14; }
+.m-station:hover text, .m-station:focus-visible text { text-decoration: underline; }
+.m-station.done circle { fill: var(--c); stroke: #000; }
+.m-station.next circle { stroke: var(--c); stroke-width: 6; animation: here 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes here { 50% { stroke-width: 10; } }
+.l-next { margin-top: 6px; font-size: 1.1rem; font-weight: 600; }
+.l-next a { color: #000; text-decoration: underline 3px; text-underline-offset: 4px; }
+
+.l-strips { gap: 10px; margin-top: 18px; }
+.l-strip { display: flex; align-items: center; gap: 14px; padding: 12px 14px; text-decoration: none; border-radius: 10px; border-left: 10px solid var(--c); background: var(--surface-2); }
+.l-strip strong { display: block; font-size: 1.05rem; }
+.l-strip small { color: var(--muted); }
+.l-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--c); color: #fff; font-weight: 800; }
+
+/* Znaki linii zamiast ikon w kafelkach */
+.sc-ico { background: var(--c); color: #fff; border-radius: 50%; }
+.planner { border: 2px solid #000; border-radius: 12px; box-shadow: none; background: #fff; }
+.plan-row input { border: 2px solid var(--line-2); background: #fff; }
+.plan-row input:focus { border-color: #000; }
+
+/* Przedmioty: każda lista misji to fragment linii */
+.lab-row { border: 0; border-radius: 0; background: none; overflow: visible; }
+.lab-row-head { border-left: 0; padding: 8px 0; }
+.lab-row-head:hover { background: none; text-decoration: underline; }
+.lab-row-missions { display: flex; border: 0; position: relative; padding: 18px 0 8px; }
+.lab-row-missions::before { content: ""; position: absolute; left: 14px; right: 14px; top: 30px; height: 10px; border-radius: 5px; background: var(--c); }
+.lab-row-missions li { flex: 1; position: relative; }
+.lab-row-missions li + li .mission-link { border: 0; }
+.mission-link { flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 8px 0 0; }
+.mission-link:hover { background: none; }
+.mission-link:hover strong { text-decoration: underline; }
+.ml-lvl { width: 34px; height: 34px; background: #fff; border: 4.5px solid #000; font-weight: 800; position: relative; }
+.mission-link.done .ml-lvl { background: var(--c); border-color: #000; }
+
+/* Ścieżka przedmiotu: pionowy schemat linii */
+.subject-head { grid-template-columns: auto 1fr auto; gap: 24px; border: 0; border-bottom: 12px solid var(--c); border-radius: 0; background: none; padding: 0 0 28px; margin-bottom: 40px; }
+.subject-head h1 { margin: 0 0 4px; }
+.sh-side { grid-auto-flow: column; align-items: center; gap: 18px; }
+.l-badge.big { width: 84px; height: 84px; font-size: 2.4rem; }
+.trail li:not(:last-child)::before { width: 12px; left: 18px; background: var(--c); }
+.trail-dot { background: #fff; border: 5px solid #000; }
+.trail li.done .trail-dot { background: var(--c); border-color: #000; }
+.trail-card { border: 0; padding: 6px 0 18px; background: none; }
+.trail-card:hover { transform: none; }
+.trail-card:hover strong { text-decoration: underline; }
+
+/* Misja: kropki-stacje w pasku postępu */
+.stepper { gap: 0; }
+.stepper li { position: relative; }
+.stepper li + li { padding-left: 30px; }
+.stepper li + li::before { content: ""; position: absolute; left: -2px; right: 30px; top: 12px; height: 8px; background: var(--c); }
+.stepper a { border: 4px solid #000; background: #fff; color: #000; font-weight: 800; position: relative; }
+.stepper a.done { background: var(--c); border-color: #000; color: #fff; }
+.stepper a.cur { background: #000; border-color: #000; color: #fff; }
+.mission-head .m-pos { display: inline-flex; align-items: center; gap: 8px; color: #000; font-weight: 700; }
+.mission-head .m-pos::before { content: ""; width: 26px; height: 8px; border-radius: 4px; background: var(--c); }
+
+.stage { border: 2px solid #000; border-radius: 12px; }
+.stage-bar { background: #fff; border-bottom: 2px solid #000; }
+.route-bar, .trace-bar { border-top: 2px solid #000; background: #fff; }
+.panel { border: 2px solid var(--line); border-radius: 12px; }
+.feedback { border-width: 2px; border-radius: 12px; }
+.g-edge line { stroke-width: 5; }
+.g-edge.on line, .g-edge.tree line { stroke-width: 9; }
+.g-node circle { stroke: #000; stroke-width: 4; }
+.bio-route { stroke-width: 7; }
+.case { border-radius: 4px; }
+.option.on { border-color: #000; }
+.option.on kbd { background: #000; }
+
+.stats.big { border: 2px solid #000; }
+.tabbar { background: #000; border-top: 0; }
+.tabbar a { color: rgba(255,255,255,.65); }
+.tabbar a[aria-current="page"] { background: #fff; color: #000; }
+
+@media (max-width: 760px) {
+  .metro-wrap { display: none; }
+  .l-strips { display: grid; }
+  .lab-row-missions { flex-direction: column; gap: 14px; padding: 6px 0 0 4px; }
+  .lab-row-missions::before { left: 15px; right: auto; top: 10px; bottom: 10px; width: 10px; height: auto; }
+  .mission-link { flex-direction: row; align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) { .m-station.next circle { animation: none; } }
+
+/* Akcent „bieżący” to żółć ze znaków; na bieli wymaga ciemnego tekstu lub obrysu. */
+:focus-visible { outline-color: var(--line-blue); }
+.p-tri { stroke: #000; } .p-tri-label { fill: #000; }
+.bio-node.last circle { stroke: var(--c); stroke-width: 5; }
+.g-node.last circle { stroke: var(--c); stroke-width: 6; stroke-dasharray: none; }
+.g-node.end circle { stroke: #000; }
+.g-node.current circle { fill: var(--gold); stroke: #000; }
+.g-node.current .g-label, .g-node.updated .g-dist text { fill: #000; }
+.g-dist rect { fill: #000; } .g-dist text { fill: #fff; }
+.g-node.updated .g-dist rect { fill: var(--gold); stroke: #000; stroke-width: 1.5; }
+.progress-grid { align-items: start; }
+@media (max-width: 680px) {
+  .subject-head { grid-template-columns: auto 1fr; }
+  .sh-side { grid-column: 1 / -1; justify-content: start; }
+  .l-badge.big { width: 60px; height: 60px; font-size: 1.7rem; }
+  .actions { background: rgba(255, 255, 255, .96); box-shadow: 0 -1px 0 var(--line); }
 }

@@ -54,11 +54,13 @@ Nie przedstawiaj prototypu jako ukończonego „World Compilera” ani jako apli
 
 ```text
 docs/app/index.html          Punkt wejścia, bez zewnętrznych zależności
-docs/app/assets/style.css    Interfejs: jasny/ciemny motyw, wersja mobilna
+docs/app/assets/style.css    Interfejs w stylu mapy metra, wersja mobilna
+docs/app/assets/fonts/       Overpass (OFL), dołączony lokalnie do pracy offline
 docs/app/src/data.js         Autorskie zadania i grafy
 docs/app/src/engine.js       Sprawdzanie, Dijkstra, postęp
 docs/app/src/app.js          Stan, routing (#/…), zdarzenia
-docs/app/src/views.js        Widoki: start, laboratoria, misja, postępy
+docs/app/src/views.js        Widoki: start, przedmioty, misja, postępy
+docs/app/src/art.js          Mapa linii nauki na stronie startowej
 docs/app/src/activities.js   Ćwiczenia: wykres, krążenie, śledztwo, graf + podgląd Dijkstry
 docs/app/src/ui.js           Ikony i drobne komponenty
 server/server.mjs            HTTP i integracja Ollama
